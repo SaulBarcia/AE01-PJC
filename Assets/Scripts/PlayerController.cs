@@ -3,11 +3,11 @@ using UnityEngine.InputSystem;
 public class PlayerController : MonoBehaviour
 {
     [Header("Movimiento por suelo")]
-    public float velMovimiento = 1f;
-    public float accel = 11f;
+    public float velMovimiento = 20f;
+    public float accel = 40f;
 
     [Header("Saltos")]
-    public float fuerzaSalto = 5f;
+    public float fuerzaSalto = 10f;
     public float alturaMin = 1.1f;
     public LayerMask groundLayer;
 
@@ -23,20 +23,20 @@ public class PlayerController : MonoBehaviour
 
     private void Awake()
     {
-        rb.GetComponent<Rigidbody>();
+        rb = GetComponent<Rigidbody>();
         rb.interpolation = RigidbodyInterpolation.Interpolate;
         PauseCanvas.SetActive(false);
     }
 
     private void FixedUpdate()
     {
+        ComprobarSiEnSuelo();
         MoverJugador();
-        if(quieroSaltar)
+        if (quieroSaltar)
         {
-            rb.AddForce(Vector3.up * fuerzaSalto, ForceMode.Impulse);
+            Saltar();
             quieroSaltar = false;
         }
-
     }
 
     public void OnMove(InputValue valor)
@@ -46,7 +46,8 @@ public class PlayerController : MonoBehaviour
 
     public void OnJump(InputValue valor2)
     {
-        if(valor2.isPressed && tocaSuelo)
+        Debug.Log("Tecla de salto pulsada. ¿Toca suelo? " + tocaSuelo);
+        if (valor2.isPressed && tocaSuelo)
         {
             quieroSaltar = true;
         }
@@ -67,6 +68,20 @@ public class PlayerController : MonoBehaviour
 
         rb.AddForce(velocityChange * accel, ForceMode.Acceleration);
     }
+
+    public void Saltar()
+    {
+        ComprobarSiEnSuelo();
+        if (tocaSuelo)
+        {
+                
+            Vector3 vel = rb.linearVelocity;
+            rb.linearVelocity = new Vector3(vel.x, 0f, vel.z);
+
+            rb.AddForce(Vector3.up * fuerzaSalto, ForceMode.Impulse);
+            tocaSuelo = false;           
+        }
+    }
     void HabilitarPausa()
     {
         enPausa = !enPausa;
@@ -81,4 +96,10 @@ public class PlayerController : MonoBehaviour
             PauseCanvas.SetActive(false);
         }
     }
+
+    void ComprobarSiEnSuelo()
+    {
+        tocaSuelo = Physics.Raycast(transform.position, Vector3.down, alturaMin, groundLayer);
+    }
+
 }
